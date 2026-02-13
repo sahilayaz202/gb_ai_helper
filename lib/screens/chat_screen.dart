@@ -22,22 +22,24 @@ class _ChatScreenState extends State<ChatScreen> {
   void send(String text) async {
     if (text.isEmpty) return;
 
-    // Add user message
     setState(() => messages.add(Message(text: text, isUser: true)));
-    scrollToBottom();
 
-    // Get reply from offline knowledge service
-    String reply = GBKnowledgeService.search(text);
+    // 🔹 fetch knowledge from backend
+    final data = await BackendService.getKnowledge();
 
-    // Optional: AI response
-    // reply = await AIService.ask(text);
+    String reply = "No answer found";
 
-    // Add slight delay for better UX
-    await Future.delayed(const Duration(milliseconds: 300));
+    for (final item in data) {
+      if ((item['question'] as String)
+          .toLowerCase()
+          .contains(text.toLowerCase())) {
+        reply = item['answer'];
+        break;
+      }
+    }
+
     setState(() => messages.add(Message(text: reply, isUser: false)));
-    scrollToBottom();
 
-    // Speak out reply
     await SpeechService.speak(reply);
   }
 

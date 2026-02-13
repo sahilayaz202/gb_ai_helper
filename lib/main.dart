@@ -3,6 +3,7 @@ import 'services/gb_knowledge_service.dart';
 import 'screens/chat_screen.dart';
 import 'services/speech_service.dart';
 import 'config/theme.dart'; // <-- added theme import
+import 'services/backend_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
