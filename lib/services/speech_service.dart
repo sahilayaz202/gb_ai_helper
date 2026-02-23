@@ -9,13 +9,13 @@ class SpeechService {
     await stt.initialize();
   }
 
-  static listen(Function(String) onText) async {
+  static Future<void> listen(Function(String) onText) async {
     await stt.listen(onResult: (r) {
       onText(r.recognizedWords);
     });
   }
 
-  static speak(String text) async {
+  static Future<void> speak(String text) async {
     await tts.speak(text);
   }
 }

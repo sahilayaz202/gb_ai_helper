@@ -18,27 +18,25 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController scrollController = ScrollController();
   final List<Message> messages = [];
 
+  @override
+  void initState() {
+    super.initState();
+    // Initialize offline data
+    GBKnowledgeService.init();
+  }
+
   // Send message
   void send(String text) async {
-    if (text.isEmpty) return;
+    if (text.trim().isEmpty) return;
 
     setState(() => messages.add(Message(text: text, isUser: true)));
+    scrollToBottom();
 
-    // 🔹 fetch knowledge from backend
-    final data = await BackendService.getKnowledge();
-
-    String reply = "No answer found";
-
-    for (final item in data) {
-      if ((item['question'] as String)
-          .toLowerCase()
-          .contains(text.toLowerCase())) {
-        reply = item['answer'];
-        break;
-      }
-    }
+    // Get reply from offline GBKnowledgeService
+    final reply = GBKnowledgeService.search(text);
 
     setState(() => messages.add(Message(text: reply, isUser: false)));
+    scrollToBottom();
 
     await SpeechService.speak(reply);
   }
@@ -49,11 +47,18 @@ class _ChatScreenState extends State<ChatScreen> {
       if (scrollController.hasClients) {
         scrollController.animateTo(
           scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 400),
+          duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
       }
     });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -65,38 +70,25 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Stack(
         children: [
-          // Background image
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/gb_bg.png'), // add your GB image here
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          // Chat area with transparent background
+
+          // Chat area
           Column(
             children: [
-              // Messages list
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,
                   itemCount: messages.length,
-                  itemBuilder: (_, i) => AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (child, anim) =>
-                        ScaleTransition(scale: anim, child: child),
-                    child: ChatBubble(
-                      key: ValueKey(messages[i].text),
-                      text: messages[i].text,
-                      isUser: messages[i].isUser,
-                    ),
+                  itemBuilder: (_, i) => ChatBubble(
+                    key: ValueKey(messages[i].text + i.toString()),
+                    text: messages[i].text,
+                    isUser: messages[i].isUser,
                   ),
                 ),
               ),
               // Input row
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
                 child: Row(
                   children: [
                     Expanded(
@@ -108,15 +100,14 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Mic button
                     MicButton(
                       onResult: (text) {
                         controller.text = text;
                         send(text);
+                        controller.clear();
                       },
                     ),
                     const SizedBox(width: 8),
-                    // Send button
                     IconButton(
                       icon: const Icon(Icons.send),
                       color: AppTheme.primaryColor,

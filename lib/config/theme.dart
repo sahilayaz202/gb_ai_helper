@@ -18,7 +18,6 @@ class AppTheme {
       elevation: 4,
       centerTitle: true,
       titleTextStyle: TextStyle(
-        fontFamily: 'Sansita', // Optional: add cultural font
         fontSize: 22,
         fontWeight: FontWeight.bold,
       ),
@@ -53,7 +52,6 @@ class AppTheme {
       elevation: 4,
       centerTitle: true,
       titleTextStyle: TextStyle(
-        fontFamily: 'Sansita',
         fontSize: 22,
         fontWeight: FontWeight.bold,
       ),
